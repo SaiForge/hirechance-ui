@@ -84,6 +84,7 @@ export default function Evaluate() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [currentStep, setCurrentStep] = useState(1);
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
         name: '',
@@ -127,23 +128,42 @@ export default function Evaluate() {
     const handleFormChange = (e) => {
         const { name, type, value, checked } = e.target;
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : type === 'number' ? Number(value) : value }));
+        setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     };
 
     const handleEduChange = (e) => {
         const { name, type, value } = e.target;
         setEducation(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
+        setErrors(prev => { const n = { ...prev }; delete n[`edu_${name}`]; return n; });
     };
 
     const addExp = () => setExperience(prev => [...prev, { company: '', role: 'Intern', duration_months: 3, is_relevant: 'true', tech_used: '' }]);
-    const removeExp = (i) => setExperience(prev => prev.filter((_, idx) => idx !== i));
-    const handleExpChange = (i, field, value) => setExperience(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; });
+    const removeExp = (i) => { setExperience(prev => prev.filter((_, idx) => idx !== i)); setErrors(prev => { const n = { ...prev }; delete n[`exp_${i}_company`]; return n; }); };
+    const handleExpChange = (i, field, value) => { setExperience(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; }); if (field === 'company') setErrors(prev => { const n = { ...prev }; delete n[`exp_${i}_company`]; return n; }); };
 
     const addProject = () => setProjects(prev => [...prev, { title: '', project_type: 'Web', tech_stack: '', description: '', github_link: '', team_size: 1, duration_weeks: 4, is_open_source: 'false', production_deployed: 'false' }]);
-    const removeProject = (i) => setProjects(prev => prev.filter((_, idx) => idx !== i));
-    const handleProjectChange = (i, field, value) => setProjects(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; });
+    const removeProject = (i) => { setProjects(prev => prev.filter((_, idx) => idx !== i)); setErrors(prev => { const n = { ...prev }; delete n[`proj_${i}_title`]; return n; }); };
+    const handleProjectChange = (i, field, value) => { setProjects(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; }); if (field === 'title') setErrors(prev => { const n = { ...prev }; delete n[`proj_${i}_title`]; return n; }); };
+
+    const validate = () => {
+        const errs = {};
+        let firstStep = null;
+        if (!formData.name.trim()) { errs.name = 'Required'; firstStep = firstStep ?? 1; }
+        if (education.cgpa === '' || education.cgpa === null || education.cgpa === undefined || isNaN(Number(education.cgpa))) { errs.edu_cgpa = 'Required'; firstStep = firstStep ?? 2; }
+        experience.forEach((exp, i) => { if (!exp.company.trim()) { errs[`exp_${i}_company`] = 'Required'; firstStep = firstStep ?? 3; } });
+        projects.forEach((proj, i) => { if (!proj.title.trim()) { errs[`proj_${i}_title`] = 'Required'; firstStep = firstStep ?? 4; } });
+        return { errs, firstStep };
+    };
 
     const handleSubmit = async (e) => {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        const { errs, firstStep } = validate();
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs);
+            setCurrentStep(firstStep);
+            return;
+        }
+        setErrors({});
         setLoading(true);
         setResult(null);
         const payload = {
@@ -151,7 +171,7 @@ export default function Evaluate() {
             internships: experience.length,
             skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
             certifications: formData.certifications.split(',').map(s => s.trim()).filter(Boolean),
-            education: { ...education, institute_tier: Number(education.institute_tier) },
+            education: { ...education, institute_tier: Number(education.institute_tier), cgpa: Number(education.cgpa) },
             soft_skills: softSkills,
             work_experience: experience.map(exp => ({
                 ...exp,
@@ -190,10 +210,11 @@ export default function Evaluate() {
 
                     <div>
                         <label className={labelCls}>
-                            Full Name
+                            Full Name <span className="text-red-400">*</span>
                             <InfoTip text="Enter your legal name exactly as it appears on official documents and certificates." />
                         </label>
-                        <input type="text" name="name" value={formData.name} onChange={handleFormChange} className={inputCls} placeholder="Legal full name" />
+                        <input type="text" name="name" value={formData.name} onChange={handleFormChange} className={`${inputCls} ${errors.name ? 'border-red-400' : ''}`} placeholder="Legal full name" />
+                        {errors.name && <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.name}</p>}
                     </div>
 
                     <div>
@@ -268,10 +289,11 @@ export default function Evaluate() {
                         </div>
                         <div>
                             <label className={labelCls}>
-                                CGPA
+                                CGPA <span className="text-red-400">*</span>
                                 <InfoTip text="Cumulative Grade Point Average on a 10-point scale. Above 8.0 is generally considered strong." />
                             </label>
-                            <input type="number" name="cgpa" step="0.1" min="0" max="10" value={education.cgpa} onChange={handleEduChange} className={inputCls} placeholder="e.g. 8.5" />
+                            <input type="number" name="cgpa" step="0.1" min="0" max="10" value={education.cgpa} onChange={handleEduChange} className={`${inputCls} ${errors.edu_cgpa ? 'border-red-400' : ''}`} placeholder="e.g. 8.5" />
+                            {errors.edu_cgpa && <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.edu_cgpa}</p>}
                         </div>
                     </div>
 
@@ -335,10 +357,11 @@ export default function Evaluate() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
-                                        Company
+                                        Company <span className="text-red-400">*</span>
                                         <InfoTip text="Name of the organisation where you worked or interned." />
                                     </label>
-                                    <input type="text" value={exp.company} onChange={e => handleExpChange(i, 'company', e.target.value)} className={inputCls} placeholder="Company name" />
+                                    <input type="text" value={exp.company} onChange={e => handleExpChange(i, 'company', e.target.value)} className={`${inputCls} ${errors[`exp_${i}_company`] ? 'border-red-400' : ''}`} placeholder="Company name" />
+                                    {errors[`exp_${i}_company`] && <p className="mt-1 text-[11px] text-red-400 font-medium">{errors[`exp_${i}_company`]}</p>}
                                 </div>
                                 <div>
                                     <label className={labelCls}>
@@ -401,10 +424,11 @@ export default function Evaluate() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
-                                        Project Title
+                                        Project Title <span className="text-red-400">*</span>
                                         <InfoTip text="Name of the project. Make it descriptive — e.g. 'Real-time Fraud Detection Pipeline'." />
                                     </label>
-                                    <input type="text" value={proj.title} onChange={e => handleProjectChange(i, 'title', e.target.value)} className={inputCls} placeholder="e.g. ML Pipeline" />
+                                    <input type="text" value={proj.title} onChange={e => handleProjectChange(i, 'title', e.target.value)} className={`${inputCls} ${errors[`proj_${i}_title`] ? 'border-red-400' : ''}`} placeholder="e.g. ML Pipeline" />
+                                    {errors[`proj_${i}_title`] && <p className="mt-1 text-[11px] text-red-400 font-medium">{errors[`proj_${i}_title`]}</p>}
                                 </div>
                                 <div>
                                     <label className={labelCls}>
