@@ -79,7 +79,7 @@ function InfoTip({ text }) {
 
 export default function Evaluate() {
     const navigate = useNavigate();
-    const API_URL = 'http://placement-api-env-v9.eba-tfmcvj6s.us-east-1.elasticbeanstalk.com/predict';
+    const API_URL = "https://4omwlpf6zsq5hxukbakr6xgxhi0utwqo.lambda-url.us-east-1.on.aws/predict";
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
