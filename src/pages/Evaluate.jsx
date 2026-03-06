@@ -216,7 +216,7 @@ export default function Evaluate() {
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-6 pt-1">
+                    <div className="flex flex-wrap items-center gap-4 pt-1">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                             <input type="checkbox" name="has_portfolio_site" checked={formData.has_portfolio_site} onChange={handleFormChange} className="accent-black w-3.5 h-3.5" />
                             <span className="text-xs text-[#888]">Has portfolio site</span>
@@ -235,7 +235,7 @@ export default function Evaluate() {
                 <div className="space-y-5 animate-fade-in">
                     <p className={sectionHeadCls}>Education Details</p>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Degree
@@ -256,7 +256,7 @@ export default function Evaluate() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Institute Tier
@@ -275,7 +275,7 @@ export default function Evaluate() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Graduation Year
@@ -299,7 +299,7 @@ export default function Evaluate() {
                             Soft Skills
                             <InfoTip text="Rate each soft skill from 1 (poor) to 5 (excellent). Be honest — these are factored into overall scoring." />
                         </p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {Object.entries(softSkills).map(([key, val]) => (
                                 <div key={key}>
                                     <label className={labelCls}>{key.replace(/_/g, ' ')}</label>
@@ -332,7 +332,7 @@ export default function Evaluate() {
                                     </svg>
                                 </button>
                             )}
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
                                         Company
@@ -350,7 +350,7 @@ export default function Evaluate() {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
                                         Duration (Months)
@@ -398,7 +398,7 @@ export default function Evaluate() {
                                     </svg>
                                 </button>
                             )}
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
                                         Project Title
@@ -423,7 +423,7 @@ export default function Evaluate() {
                                 </label>
                                 <input type="text" value={proj.tech_stack} onChange={e => handleProjectChange(i, 'tech_stack', e.target.value)} className={inputCls} placeholder="e.g. Python, FastAPI, Kubernetes" />
                             </div>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelCls}>
                                         Duration (Weeks)
@@ -439,7 +439,7 @@ export default function Evaluate() {
                                     <input type="number" min="1" value={proj.team_size} onChange={e => handleProjectChange(i, 'team_size', e.target.value)} className={inputCls} />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className={labelCls}>
                                         Open Source?
@@ -489,7 +489,7 @@ export default function Evaluate() {
                         <textarea name="certifications" value={formData.certifications} onChange={handleFormChange} rows={2} className={inputCls} placeholder="e.g. AWS Certified, GCP Associate" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Coding Rating
@@ -506,7 +506,7 @@ export default function Evaluate() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Open Source PRs
@@ -523,7 +523,7 @@ export default function Evaluate() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label className={labelCls}>
                                 Hackathons Won
@@ -576,10 +576,10 @@ export default function Evaluate() {
             </div>
 
             {/* Main layout */}
-            <div className="relative w-full max-w-5xl h-[88vh] min-h-[560px] flex border border-[#e0e0e0] bg-white rounded-sm overflow-hidden z-10 animate-fade-up shadow-sm">
+            <div className="relative w-full max-w-5xl h-[calc(100vh-2rem)] md:h-[88vh] md:min-h-[560px] flex flex-col md:flex-row border border-[#e0e0e0] bg-white rounded-sm overflow-hidden z-10 animate-fade-up shadow-sm">
 
                 {/* Sidebar */}
-                <div className="w-[200px] bg-[#fafafa] border-r border-[#ebebeb] p-6 flex flex-col flex-shrink-0">
+                <div className="hidden md:flex w-[200px] bg-[#fafafa] border-r border-[#ebebeb] p-6 flex-col flex-shrink-0">
                     <button onClick={() => navigate('/')} className="flex items-center gap-2 text-xs font-semibold text-[#aaa] hover:text-[#555] transition-colors mb-8 w-fit group">
                         <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -612,6 +612,39 @@ export default function Evaluate() {
 
                 {/* Content area */}
                 <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Mobile header — shown only on small screens */}
+                    <div className="md:hidden flex-shrink-0 border-b border-[#ebebeb]">
+                        <div className="bg-[#fafafa] px-4 py-3 flex items-center justify-between">
+                            <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-xs font-semibold text-[#aaa] hover:text-[#555] transition-colors group">
+                                <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Back
+                            </button>
+                            <div className="text-sm font-black text-black tracking-tight">HireChance</div>
+                            {!loading && !result ? (
+                                <span className="text-[11px] text-[#bbb] font-semibold">{currentStep} / {APP_STEPS.length}</span>
+                            ) : (
+                                <span className="w-10" />
+                            )}
+                        </div>
+                        {!loading && !result && (
+                            <div className="px-4 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+                                {APP_STEPS.map(step => {
+                                    const isActive = step.id === currentStep;
+                                    const isDone = step.id < currentStep;
+                                    return (
+                                        <button key={step.id} type="button" onClick={() => setCurrentStep(step.id)}
+                                            className={['flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors',
+                                                isActive ? 'bg-black text-white' : isDone ? 'text-[#555] bg-[#f0f0f0]' : 'text-[#bbb]'].join(' ')}>
+                                            {isDone && <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                                            {step.title}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                     {loading || result ? (
                         <div className="flex-1 overflow-y-auto no-scrollbar animate-fade-in">
                             {loading && (
@@ -626,7 +659,7 @@ export default function Evaluate() {
                                 <div className="p-6 md:p-8 space-y-6 animate-fade-in">
 
                                     {/* ── Header ── */}
-                                    <div className="flex items-start justify-between gap-4 pb-5 border-b border-[#e8e8e8]">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-5 border-b border-[#e8e8e8]">
                                         <div>
                                             <p className="text-[10px] font-bold text-[#aaa] uppercase tracking-widest mb-1">Evaluation Report</p>
                                             <h2 className="text-xl font-black text-black leading-tight">{result.candidate_name}</h2>
@@ -668,12 +701,12 @@ export default function Evaluate() {
                                         <div className="space-y-2">
                                             {Object.entries(result.dimensions).map(([key, dim]) => (
                                                 <div key={key} className="flex items-center gap-3">
-                                                    <div className="w-36 text-[11px] text-[#777] font-medium truncate flex-shrink-0">{dim.label}</div>
+                                                    <div className="w-24 sm:w-36 text-[11px] text-[#777] font-medium truncate flex-shrink-0">{dim.label}</div>
                                                     <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
                                                         <div className="h-full bg-black rounded-full transition-all" style={{ width: `${dim.percentage}%` }} />
                                                     </div>
                                                     <div className="w-10 text-right text-[11px] font-bold text-[#444]">{dim.score}<span className="font-normal text-[#bbb]">/{dim.max_score}</span></div>
-                                                    <div className={`w-20 text-right text-[10px] font-semibold flex-shrink-0 ${dim.percentage >= 70 ? 'text-[#2a7a2a]' : dim.percentage >= 45 ? 'text-[#997700]' : 'text-[#a33]'}`}>{dim.verdict}</div>
+                                                    <div className={`hidden sm:block w-20 text-right text-[10px] font-semibold flex-shrink-0 ${dim.percentage >= 70 ? 'text-[#2a7a2a]' : dim.percentage >= 45 ? 'text-[#997700]' : 'text-[#a33]'}`}>{dim.verdict}</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -738,7 +771,7 @@ export default function Evaluate() {
                                     </div>
 
                                     {/* ── Strengths & Red Flags ── */}
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <p className={sectionHeadCls}>Strengths</p>
                                             <ul className="space-y-1.5">
