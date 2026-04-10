@@ -49,7 +49,7 @@ export default function Home() {
 
                 <h1 className="text-5xl md:text-7xl font-black text-black mb-6 tracking-tight leading-[1.08]">
                     Next-Gen Candidate<br className="hidden md:block" />
-                    <span className="text-[#aaa]"> Evaluation Testing </span>
+                    <span className="text-[#aaa]"> Evaluation</span>
                 </h1>
 
                 <p className="text-base md:text-lg text-[#888] mb-12 max-w-xl mx-auto leading-relaxed">
