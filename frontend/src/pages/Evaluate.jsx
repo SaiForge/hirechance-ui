@@ -391,14 +391,15 @@ export default function Evaluate() {
                 <section className="bg-black-forest text-cornsilk py-stack-lg px-margin-mobile md:px-margin-desktop border-b-[3px] border-accent">
                     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-stack-md w-full">
                         <div>
-                            <h1 className="font-h2 text-h2 mb-stack-sm">Hi {result.candidate_name || formData.name}, here's your result.</h1>
+                            <h1 className="font-h2 text-h2 mb-stack-sm">Hi {result.student_name || formData.name}, here's your result.</h1>
                             <div className="inline-block bg-accent text-black-forest font-label-caps text-label-caps px-4 py-2 uppercase font-bold border-2 border-black-forest">
-                                {result.ats_score >= 80 ? 'Excellent Chances' : result.ats_score >= 60 ? 'Good Chances' : 'Needs Improvement'}
+                                {result.placement_category || 'Evaluated'}
                             </div>
-                            <p className="mt-2 text-surface-bright/80 text-lg font-bold uppercase">{result.target_role || formData.target_role}</p>
+                            <p className="mt-2 text-surface-bright/80 text-lg font-bold uppercase">{formData.target_role}</p>
+                            <p className="mt-1 text-sm text-surface-bright/60">Better than {result.percentile}% of peers</p>
                         </div>
                         <div className="text-[120px] leading-none font-h1 font-bold text-cornsilk">
-                            {result.ats_score}%
+                            {result.placement_score}%
                         </div>
                     </div>
                 </section>
@@ -406,10 +407,37 @@ export default function Evaluate() {
                 {/* Content Grid */}
                 <div className="max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-stack-lg grid grid-cols-1 md:grid-cols-12 gap-gutter">
                     <div className="md:col-span-7 flex flex-col gap-stack-lg">
-                        {/* Summary & Reasoning */}
+                        {/* Company Matches */}
                         <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-primary-container p-gutter rounded-[4px]">
-                            <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Evaluation Details</h2>
-                            <p className="font-body-md whitespace-pre-wrap">{result.evaluation_reasoning || "Based on the provided metrics and target role requirements."}</p>
+                            <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Top Company Matches</h2>
+                            <div className="flex flex-col gap-4">
+                                {result.company_matches && result.company_matches.length > 0 ? (
+                                    result.company_matches.map((match, idx) => (
+                                        <div key={idx} className="flex justify-between items-center border-b-2 border-outline-variant pb-2">
+                                            <div>
+                                                <div className="font-bold text-lg">{match.name}</div>
+                                                <div className="text-sm text-on-surface-variant">{match.type}</div>
+                                            </div>
+                                            <div className="font-bold text-primary">{match.match_percentage}%</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="font-body-md text-on-surface-variant">No strong matches found yet. Focus on the suggested improvements!</p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {/* Breakdown */}
+                        <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-primary p-gutter rounded-[4px]">
+                            <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Score Breakdown</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {Object.entries(result.breakdown || {}).map(([key, val]) => (
+                                    <div key={key} className="flex flex-col">
+                                        <span className="text-sm font-bold uppercase text-on-surface-variant">{key.replace('_', ' ')}</span>
+                                        <span className="text-2xl font-bold text-primary">{val}%</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -418,11 +446,18 @@ export default function Evaluate() {
                         {result.improvements && result.improvements.length > 0 && (
                             <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-accent p-gutter rounded-[4px]">
                                 <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Actionable Improvements</h2>
-                                <ul className="flex flex-col gap-stack-md list-disc list-inside">
+                                <div className="flex flex-col gap-stack-md">
                                     {result.improvements.map((imp, idx) => (
-                                        <li key={idx} className="font-body-md font-bold text-black-forest">{imp}</li>
+                                        <div key={idx} className="flex flex-col gap-1 border-b-2 border-outline-variant pb-4 last:border-0 last:pb-0">
+                                            <div className="flex justify-between items-start">
+                                                <span className="font-bold text-black-forest">{imp.title}</span>
+                                                <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${imp.priority === 'HIGH' ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`}>{imp.priority}</span>
+                                            </div>
+                                            <p className="text-sm text-on-surface-variant">{imp.detail}</p>
+                                            <div className="text-sm font-bold text-primary mt-1">Impact: {imp.impact}</div>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -461,7 +496,7 @@ export default function Evaluate() {
             </div>
 
             {/* MAIN LAYOUT */}
-            <div className="flex flex-1 overflow-hidden relative pb-32">
+            <div className="flex flex-1 overflow-hidden relative">
                 {/* SideNavBar */}
                 <aside className="hidden md:flex flex-col gap-stack-md p-margin-mobile bg-surface h-full w-64 border-r-2 border-primary shrink-0 z-10">
                     <div className="mb-stack-lg">
@@ -485,25 +520,40 @@ export default function Evaluate() {
 
                 {/* MAIN FORM AREA */}
                 <main className="flex-1 overflow-y-auto bg-cornsilk p-margin-mobile md:p-margin-desktop z-0 h-full">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-4xl mx-auto flex flex-col gap-stack-md pb-16">
                         {renderStepContent()}
+                        
+                        {/* NAVIGATION BUTTONS */}
+                        <div className="bg-black-forest p-4 md:p-6 border-2 border-primary flex justify-between items-center gap-4 rounded">
+                            {currentStep > 1 ? (
+                                <button 
+                                    onClick={() => setCurrentStep(prev => prev - 1)}
+                                    className="font-bold uppercase py-3 px-6 bg-transparent border-2 border-cornsilk text-cornsilk hover:bg-surface-variant hover:text-black-forest transition-colors"
+                                >
+                                    Previous
+                                </button>
+                            ) : (
+                                <div /> 
+                            )}
+                            
+                            {currentStep < APP_STEPS.length ? (
+                                <button 
+                                    onClick={() => setCurrentStep(prev => prev + 1)}
+                                    className="font-bold uppercase py-3 px-8 md:px-12 text-lg bg-primary text-cornsilk border-2 border-transparent hover:border-cornsilk transition-colors"
+                                >
+                                    Next Step
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handleSubmit} 
+                                    className="font-bold uppercase py-3 px-8 md:px-12 text-lg transition-colors border-2 border-transparent bg-accent text-black-forest hover:bg-[#bc6c25]"
+                                >
+                                    Predict Chances
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </main>
-            </div>
-
-            {/* SUBMIT SECTION (Sticky Bottom) */}
-            <div className="absolute bottom-0 left-0 right-0 bg-black-forest p-4 md:p-6 z-40 border-t-4 border-accent flex justify-center">
-                <button 
-                    onClick={handleSubmit} 
-                    disabled={currentStep !== APP_STEPS.length}
-                    className={`font-bold uppercase py-4 px-8 md:px-16 text-lg transition-colors border-2 border-transparent w-full md:w-auto max-w-2xl ${
-                        currentStep === APP_STEPS.length
-                            ? 'bg-accent text-black-forest hover:bg-[#bc6c25]'
-                            : 'bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed'
-                    }`}
-                >
-                    Predict My Placement Chances
-                </button>
             </div>
         </div>
     );
