@@ -6,23 +6,9 @@ export default function Header() {
     return (
         <header className="bg-primary-container border-b-2 border-primary sticky top-0 h-[64px] flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop z-50 shrink-0">
             <Link to="/" className="font-h2 text-h2 font-bold text-surface-bright uppercase">
-                PlacePredict
+                HireChance
             </Link>
-            <nav className="hidden md:flex gap-4">
-                <Link 
-                    to="/dashboard" 
-                    className={`uppercase px-4 py-2 transition-colors duration-100 ${location.pathname === '/dashboard' ? 'bg-primary text-surface-bright border-2 border-secondary translate-x-0.5 translate-y-0.5' : 'text-surface-bright hover:bg-secondary-container hover:text-on-secondary-container hover:bg-secondary'}`}
-                >
-                    Dashboard
-                </Link>
-                <Link 
-                    to="/evaluate" 
-                    className={`uppercase px-4 py-2 transition-colors duration-100 ${location.pathname === '/evaluate' ? 'bg-primary text-surface-bright border-2 border-secondary translate-x-0.5 translate-y-0.5' : 'text-surface-bright hover:bg-secondary-container hover:text-on-secondary-container hover:bg-secondary'}`}
-                >
-                    Predict
-                </Link>
 
-            </nav>
             <div className="flex items-center gap-4 text-surface-bright">
                 {localStorage.getItem('token') ? (
                     <button 

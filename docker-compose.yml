@@ -1,19 +1,19 @@
-version: '3.8'
-
 services:
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/placement_db
     depends_on:
       db:
         condition: service_healthy
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > /app/backend.log 2>&1"
     volumes:
       - ./backend:/app
+      - /app/venv
 
   frontend:
     build:
@@ -22,8 +22,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      # In Vite, VITE_ prefixed environment variables are exposed to the client-side code
-      - VITE_API_URL=http://localhost:8000
+      # VITE_API_URL must be reachable from the user's browser, not from inside Docker
+      - VITE_API_URL=http://localhost:8001
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -37,7 +37,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=placement_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

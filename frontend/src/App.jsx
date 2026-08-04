@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Evaluate from './pages/Evaluate';
 import Dashboard from './pages/Dashboard';
@@ -18,14 +18,22 @@ function Layout() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/evaluate" element={<Evaluate />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/evaluate" element={<ProtectedRoute><Evaluate /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>

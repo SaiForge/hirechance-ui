@@ -16,7 +16,7 @@ export default function Login() {
         setError('');
         setLoading(true);
 
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
         try {
             const formDataObj = new URLSearchParams();

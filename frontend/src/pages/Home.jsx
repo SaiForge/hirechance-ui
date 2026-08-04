@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
     const navigate = useNavigate();
+    const [showMenu, setShowMenu] = useState(false);
 
     return (
         <div className="flex-grow flex flex-col w-full bg-surface text-on-surface">
@@ -10,19 +12,34 @@ export default function Home() {
                 {/* LEFT HALF */}
                 <div className="w-full md:w-1/2 p-margin-mobile md:p-margin-desktop flex flex-col justify-center border-b-2 md:border-b-0 md:border-r-2 border-primary-container">
                     <span className="text-accent font-label-caps text-label-caps uppercase tracking-[2px] mb-stack-md block">
-                        AI-POWERED PLACEMENT TOOL
+                        AI-POWERED JOB RECOMMENDER
                     </span>
                     <h1 className="text-cornsilk font-h1-mobile md:font-h1 text-h1-mobile md:text-h1 mb-stack-lg leading-tight">
-                        Know Your Placement Chances.
+                        Find Your Ideal Job.
                     </h1>
-                    <div className="flex flex-col sm:flex-row gap-stack-md">
+                    <div className="flex flex-col sm:flex-row gap-stack-md relative">
                         <button 
-                            onClick={() => navigate('/evaluate')}
+                            onClick={() => setShowMenu(!showMenu)}
                             className="brutal-button-primary"
                         >
-                            Predict Now
+                            Get Recommendations
                         </button>
-                        <button className="brutal-button-secondary">Upload Resume</button>
+                        {showMenu && (
+                            <div className="absolute top-full mt-2 left-0 flex flex-col gap-3 bg-cornsilk border-2 border-black-forest p-4 z-10 min-w-[240px]" style={{ boxShadow: '4px 4px 0px #606c38' }}>
+                                <button 
+                                    onClick={() => navigate('/evaluate')}
+                                    className="w-full py-2 px-4 uppercase font-bold text-black-forest border-2 border-black-forest hover:bg-black-forest hover:text-cornsilk transition-colors"
+                                >
+                                    Enter Manually
+                                </button>
+                                <button 
+                                    onClick={() => navigate('/evaluate', { state: { uploadMode: true } })}
+                                    className="w-full py-2 px-4 uppercase font-bold text-black-forest border-2 border-black-forest hover:bg-black-forest hover:text-cornsilk transition-colors"
+                                >
+                                    Upload Resume
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
                 {/* RIGHT HALF - Geometric Illustration */}
@@ -34,7 +51,7 @@ export default function Home() {
                     {/* Large Overlay Text */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <span className="text-cornsilk font-bold text-[120px] md:text-[180px] leading-none opacity-90 tracking-tighter" style={{ textShadow: '4px 4px 0px #606c38' }}>
-                            78%
+                            99%
                         </span>
                     </div>
                 </div>
@@ -45,15 +62,15 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-3 gap-stack-md md:gap-0 divide-y-2 md:divide-y-0 md:divide-x-2 divide-black-forest">
                     <div className="text-center py-stack-sm md:py-0">
                         <div className="font-h2 text-h2 mb-unit">10,000+</div>
-                        <div className="font-label-caps text-label-caps uppercase">Students Analyzed</div>
+                        <div className="font-label-caps text-label-caps uppercase">Jobs Analyzed</div>
                     </div>
                     <div className="text-center py-stack-sm md:py-0">
-                        <div className="font-h2 text-h2 mb-unit">94%</div>
-                        <div className="font-label-caps text-label-caps uppercase">Prediction Accuracy</div>
+                        <div className="font-h2 text-h2 mb-unit">98%</div>
+                        <div className="font-label-caps text-label-caps uppercase">Match Accuracy</div>
                     </div>
                     <div className="text-center py-stack-sm md:py-0">
                         <div className="font-h2 text-h2 mb-unit">500+</div>
-                        <div className="font-label-caps text-label-caps uppercase">Partner Companies</div>
+                        <div className="font-label-caps text-label-caps uppercase">Tech Roles</div>
                     </div>
                 </div>
             </section>

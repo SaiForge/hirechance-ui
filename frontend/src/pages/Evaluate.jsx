@@ -1,6 +1,6 @@
 // src/pages/Evaluate.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ROLES = [
     // AI / ML
@@ -19,17 +19,7 @@ const ROLES = [
 const DEGREES = ['B.Tech', 'B.E.', 'B.Sc', 'BCA', 'M.Tech', 'M.Sc', 'MCA', 'MBA', 'PhD', 'Other'];
 const BRANCHES = ['CSE', 'IT', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Mathematics', 'Physics', 'Data Science', 'AI/ML', 'Other'];
 const GRAD_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
-const INSTITUTE_TIERS = [
-    { value: 1, label: 'Tier 1 — IIT / IISc / BITS' },
-    { value: 2, label: 'Tier 2 — NIT / IIIT / Top State' },
-    { value: 3, label: 'Tier 3 — Reputed Private' },
-    { value: 4, label: 'Tier 4 — Average / Deemed' },
-    { value: 5, label: 'Tier 5 — Open / Distance' },
-];
-const YES_NO = [{ label: 'Yes', value: 'true' }, { label: 'No', value: 'false' }];
 const EXP_ROLES = ['Intern', 'Junior Engineer', 'Software Engineer', 'Senior Engineer', 'Lead', 'Manager', 'Consultant', 'Other'];
-const PROJECT_TYPES = ['Web', 'Mobile', 'ML / AI', 'Data Pipeline', 'DevOps / Cloud', 'Research', 'Open Source', 'Other'];
-const PRESENCE_SCORES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 const APP_STEPS = [
     { id: 1, title: 'Info', icon: 'person' },
@@ -41,27 +31,22 @@ const APP_STEPS = [
 
 export default function Evaluate() {
     const navigate = useNavigate();
-    const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1/placement/predict` : "http://localhost:8000/api/v1/placement/predict";
+    const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1/recommend/predict` : "http://localhost:8001/api/v1/recommend/predict";
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [errors, setErrors] = useState({});
+    const location = useLocation();
+    const [isUploadMode, setIsUploadMode] = useState(location.state?.uploadMode || false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const [formData, setFormData] = useState({
-        name: '', target_role: 'AI Engineer', total_experience_months: 0,
-        skills: '', certifications: '', coding_rating: 0, leetcode_solved: 0,
-        open_source_contributions: 0, github_stars: 0, hackathons_participated: 0,
-        hackathons_won: 0, publications: 0, online_presence_score: 0,
-        has_portfolio_site: false, has_video_resume: false,
+        name: '', target_role: 'AI Engineer', skills: '', certifications: ''
     });
 
     const [education, setEducation] = useState({
-        degree: 'B.Tech', branch: 'CSE', institute_tier: 3, cgpa: 8.5, graduation_year: 2024, backlogs: 0,
-    });
-
-    const [softSkills, setSoftSkills] = useState({
-        communication: 3, teamwork: 3, problem_solving: 3, leadership: 3, adaptability: 3,
+        degree: 'B.Tech', branch: 'CSE', cgpa: 8.5, graduation_year: 2024,
     });
 
     const [experience, setExperience] = useState([]);
@@ -79,13 +64,92 @@ export default function Evaluate() {
         setErrors(prev => { const n = { ...prev }; delete n[`edu_${name}`]; return n; });
     };
 
-    const addExp = () => setExperience(prev => [...prev, { company: '', role: 'Intern', duration_months: 3, is_relevant: 'true', tech_used: '' }]);
+    const addExp = () => setExperience(prev => [...prev, { company: '', role: 'Intern' }]);
     const removeExp = (i) => { setExperience(prev => prev.filter((_, idx) => idx !== i)); };
     const handleExpChange = (i, field, value) => { setExperience(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; }); if (field === 'company') setErrors(prev => { const n = { ...prev }; delete n[`exp_${i}_company`]; return n; }); };
 
-    const addProject = () => setProjects(prev => [...prev, { title: '', project_type: 'Web', tech_stack: '', description: '', github_link: '', team_size: 1, duration_weeks: 4, is_open_source: 'false', production_deployed: 'false' }]);
+    const addProject = () => setProjects(prev => [...prev, { title: '', tech_stack: '' }]);
     const removeProject = (i) => { setProjects(prev => prev.filter((_, idx) => idx !== i)); };
     const handleProjectChange = (i, field, value) => { setProjects(prev => { const a = [...prev]; a[i] = { ...a[i], [field]: value }; return a; }); if (field === 'title') setErrors(prev => { const n = { ...prev }; delete n[`proj_${i}_title`]; return n; }); };
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const handleFileUpload = async () => {
+        if (!selectedFile) return;
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to use this feature');
+            navigate('/login');
+            return;
+        }
+
+        setLoading(true);
+        setErrors({});
+        setResult(null);
+
+        const formDataFile = new FormData();
+        formDataFile.append('file', selectedFile);
+
+        try {
+            const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
+            const UPLOAD_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1/resume/upload` : "http://localhost:8001/api/v1/resume/upload";
+            const res = await fetch(UPLOAD_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formDataFile
+            });
+
+            if (res.status === 401) {
+                alert('Session expired. Please login again.');
+                localStorage.removeItem('token');
+                navigate('/login');
+                throw new Error('Unauthorized');
+            }
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
+            
+            const [data] = await Promise.all([res.json(), minDelay]);
+            console.log('[Debug] Raw API response:', JSON.stringify(data, null, 2));
+            
+            if (data.recommend_error) {
+                console.warn('[Debug] Recommendation error from server:', data.recommend_error);
+            }
+            
+            const mappedMatches = (data.recommendations || []).map(r => ({
+                name: r.Company,
+                type: r.Job_Title,
+                description: r.Description,
+                match_percentage: Math.round(r.Final_Score || r.Possibility || 0),
+                insights: r.Insights || {}
+            }));
+            
+            setResult({
+                student_name: formData.name || data.parsed_data?.name || 'Candidate',
+                target_role: formData.target_role || data.parsed_data?.target_role || 'General Applicant',
+                placement_category: 'Resume Match',
+                percentile: 85,
+                placement_score: mappedMatches.length > 0 ? mappedMatches[0].match_percentage : 0,
+                company_matches: mappedMatches,
+                recommend_error: data.recommend_error,
+                breakdown: { 'Skills': 80, 'Experience': 75 },
+                improvements: [] 
+            });
+            
+        } catch (err) {
+            console.error(err);
+            if (err.message !== 'Unauthorized') {
+                alert(`Error: ${err.message}`);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const validate = () => {
         const errs = {};
@@ -117,40 +181,13 @@ export default function Evaluate() {
         setResult(null);
         
         const payload = {
-            full_name: formData.name,
-            branch: education.branch,
-            degree_type: education.degree,
-            graduation_year: Number(education.graduation_year),
-            cgpa: Number(education.cgpa),
-            tenth_percentage: 85.0, // Mocked 
-            twelfth_percentage: 85.0, // Mocked 
-            backlogs: Number(education.backlogs),
-            gap_year: false,
-            skills: formData.skills.split(',').map(s => ({ name: s.trim(), level: 'intermediate' })).filter(s => s.name),
-            projects: projects.map(p => ({
-                title: p.title,
-                tech_stack: String(p.tech_stack).split(',').map(s => s.trim()).filter(Boolean),
-                description: '',
-                has_github: p.is_open_source === 'true' || p.is_open_source === true,
-                has_live_demo: p.production_deployed === 'true' || p.production_deployed === true,
-                domain: p.project_type
-            })),
-            internships: experience.map(exp => ({
-                company: exp.company,
-                role: exp.role,
-                duration_months: Number(exp.duration_months),
-                domain: 'Software',
-                is_paid: true
-            })),
-            leetcode_problems: Number(formData.leetcode_solved) || 0,
-            certifications: formData.certifications.split(',').map(s => ({ name: s.trim(), provider: 'Unknown' })).filter(s => s.name),
-            hackathons_won: Number(formData.hackathons_won) || 0,
-            publications: Number(formData.publications) || 0,
-            communication_level: 'good',
-            english_proficiency: 'fluent',
-            leadership_experience: false,
-            preferred_roles: [formData.target_role],
-            preferred_work_mode: 'hybrid'
+            resume_text: `Candidate Name: ${formData.name}\n` +
+                         `Target Role: ${formData.target_role}\n` +
+                         `Education: ${education.degree} in ${education.branch}, Graduating ${education.graduation_year}, CGPA: ${education.cgpa}\n` +
+                         `Skills: ${formData.skills}\n` +
+                         `Projects: ${projects.map(p => p.title + ' (' + p.tech_stack + ')').join(', ')}\n` +
+                         `Experience: ${experience.map(exp => exp.role + ' at ' + exp.company).join(', ')}\n` +
+                         `Certifications: ${formData.certifications}\n`
         };
 
         try {
@@ -169,13 +206,41 @@ export default function Evaluate() {
                 navigate('/login');
                 throw new Error('Unauthorized');
             }
-            if (!res.ok) throw new Error(`Server error: ${res.status}`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Server error: ${res.status}`);
+            }
             const [data] = await Promise.all([res.json(), minDelay]);
-            setResult(data);
+            
+            const mappedMatches = (data.recommendations || []).map(r => ({
+                name: r.Company,
+                type: r.Job_Title,
+                description: r.Description,
+                match_percentage: Math.round(r.Final_Score || r.Possibility || 0),
+                insights: r.Insights || {}
+            }));
+            
+            setResult({
+                student_name: formData.name || 'Candidate',
+                target_role: formData.target_role || 'General Applicant',
+                placement_category: 'Profile Match',
+                percentile: 85,
+                placement_score: mappedMatches.length > 0 ? mappedMatches[0].match_percentage : 0,
+                company_matches: mappedMatches,
+                missing_skills: ['Consider adding more specific tools to match roles better'],
+                resume_tips: ['Focus on impactful project descriptions'],
+                estimated_salary: 'Based on market',
+                skill_scores: {
+                    frontend: 80,
+                    backend: 70,
+                    database: 75,
+                    devops: 60
+                }
+            });
         } catch (err) {
             console.error(err);
             if (err.message !== 'Unauthorized') {
-                alert('Error connecting to backend.');
+                alert(`Error: ${err.message}`);
             }
         } finally {
             setLoading(false);
@@ -199,24 +264,6 @@ export default function Evaluate() {
                             <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" name="target_role" value={formData.target_role} onChange={handleFormChange}>
                                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-                        <div className="flex flex-col gap-2">
-                            <label className="font-bold text-sm uppercase">Online Presence Score</label>
-                            <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" name="online_presence_score" value={formData.online_presence_score} onChange={handleFormChange}>
-                                {PRESENCE_SCORES.map(s => <option key={s} value={s}>{s} / 10</option>)}
-                            </select>
-                        </div>
-                        <div className="flex flex-col gap-2 justify-center">
-                            <label className="flex items-center gap-2 font-bold text-sm cursor-pointer">
-                                <input type="checkbox" name="has_portfolio_site" checked={formData.has_portfolio_site} onChange={handleFormChange} className="w-4 h-4 accent-accent" />
-                                Has portfolio site
-                            </label>
-                            <label className="flex items-center gap-2 font-bold text-sm cursor-pointer">
-                                <input type="checkbox" name="has_video_resume" checked={formData.has_video_resume} onChange={handleFormChange} className="w-4 h-4 accent-accent" />
-                                Has video resume
-                            </label>
                         </div>
                     </div>
                 </section>
@@ -252,20 +299,10 @@ export default function Evaluate() {
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="font-bold text-sm uppercase">Institute Tier</label>
-                            <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" name="institute_tier" value={education.institute_tier} onChange={handleEduChange}>
-                                {INSTITUTE_TIERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                            </select>
-                        </div>
-                        <div className="flex flex-col gap-2">
                             <label className="font-bold text-sm uppercase">Graduation Year</label>
                             <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" name="graduation_year" value={education.graduation_year} onChange={handleEduChange}>
                                 {GRAD_YEARS.map(y => <option key={y}>{y}</option>)}
                             </select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="font-bold text-sm uppercase">Number of Backlogs</label>
-                            <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" name="backlogs" min="0" value={education.backlogs} onChange={handleEduChange} />
                         </div>
                     </div>
                 </section>
@@ -274,12 +311,6 @@ export default function Evaluate() {
                 <section className="border-2 border-black-forest rounded bg-cornsilk p-stack-lg relative animate-fade-in">
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#606c38] rounded-l"></div>
                     <h3 className="font-h2 text-2xl text-black-forest mb-stack-md uppercase border-b-2 border-primary pb-2">Work Experience</h3>
-                    <div className="mb-stack-md">
-                        <label className="font-bold text-sm uppercase">Total Experience (Months)</label>
-                        <div className="text-2xl font-bold mt-2 text-primary font-mono">
-                            {experience.reduce((sum, exp) => sum + (Number(exp.duration_months) || 0), 0)}
-                        </div>
-                    </div>
                     {experience.map((exp, i) => (
                         <div key={i} className="mb-stack-md p-4 border-2 border-primary-container relative">
                             <button type="button" onClick={() => removeExp(i)} className="absolute top-2 right-2 text-error font-bold text-lg">X</button>
@@ -294,20 +325,6 @@ export default function Evaluate() {
                                         {EXP_ROLES.map(r => <option key={r}>{r}</option>)}
                                     </select>
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="font-bold text-sm uppercase">Duration (Months)</label>
-                                    <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" value={exp.duration_months} onChange={e => handleExpChange(i, 'duration_months', e.target.value)} />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="font-bold text-sm uppercase">Relevant to Role?</label>
-                                    <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" value={exp.is_relevant} onChange={e => handleExpChange(i, 'is_relevant', e.target.value)}>
-                                        {YES_NO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-2 mt-4">
-                                <label className="font-bold text-sm uppercase">Tech Used (Comma separated)</label>
-                                <input className="brutal-border rounded p-3 bg-transparent brutal-input" value={exp.tech_used} onChange={e => handleExpChange(i, 'tech_used', e.target.value)} />
                             </div>
                         </div>
                     ))}
@@ -327,18 +344,8 @@ export default function Evaluate() {
                                     <input className={`brutal-border rounded p-3 bg-transparent brutal-input ${errors[`proj_${i}_title`] ? 'border-error' : ''}`} value={proj.title} onChange={e => handleProjectChange(i, 'title', e.target.value)} />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="font-bold text-sm uppercase">Type</label>
-                                    <select className="brutal-border rounded p-3 bg-transparent brutal-input appearance-none" value={proj.project_type} onChange={e => handleProjectChange(i, 'project_type', e.target.value)}>
-                                        {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-                                    </select>
-                                </div>
-                                <div className="flex flex-col gap-2">
                                     <label className="font-bold text-sm uppercase">Tech Stack</label>
                                     <input className="brutal-border rounded p-3 bg-transparent brutal-input" value={proj.tech_stack} onChange={e => handleProjectChange(i, 'tech_stack', e.target.value)} />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="font-bold text-sm uppercase">Team Size</label>
-                                    <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" value={proj.team_size} onChange={e => handleProjectChange(i, 'team_size', e.target.value)} />
                                 </div>
                             </div>
                         </div>
@@ -359,24 +366,6 @@ export default function Evaluate() {
                             <label className="font-bold text-sm uppercase">Certifications</label>
                             <textarea className="brutal-border rounded p-3 bg-transparent brutal-input" name="certifications" value={formData.certifications} onChange={handleFormChange} rows={2}></textarea>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-2">
-                                <label className="font-bold text-sm uppercase">LeetCode Solved</label>
-                                <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" name="leetcode_solved" value={formData.leetcode_solved} onChange={handleFormChange} />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="font-bold text-sm uppercase">GitHub Stars</label>
-                                <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" name="github_stars" value={formData.github_stars} onChange={handleFormChange} />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="font-bold text-sm uppercase">Hackathons Won</label>
-                                <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" name="hackathons_won" value={formData.hackathons_won} onChange={handleFormChange} />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="font-bold text-sm uppercase">Publications</label>
-                                <input className="brutal-border rounded p-3 bg-transparent brutal-input" type="number" name="publications" value={formData.publications} onChange={handleFormChange} />
-                            </div>
-                        </div>
                     </div>
                 </section>
             );
@@ -395,7 +384,7 @@ export default function Evaluate() {
                             <div className="inline-block bg-accent text-black-forest font-label-caps text-label-caps px-4 py-2 uppercase font-bold border-2 border-black-forest">
                                 {result.placement_category || 'Evaluated'}
                             </div>
-                            <p className="mt-2 text-surface-bright/80 text-lg font-bold uppercase">{formData.target_role}</p>
+                            <p className="mt-2 text-surface-bright/80 text-lg font-bold uppercase">{result.target_role}</p>
                             <p className="mt-1 text-sm text-surface-bright/60">Better than {result.percentile}% of peers</p>
                         </div>
                         <div className="text-[120px] leading-none font-h1 font-bold text-cornsilk">
@@ -404,63 +393,85 @@ export default function Evaluate() {
                     </div>
                 </section>
 
-                {/* Content Grid */}
-                <div className="max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-stack-lg grid grid-cols-1 md:grid-cols-12 gap-gutter">
-                    <div className="md:col-span-7 flex flex-col gap-stack-lg">
-                        {/* Company Matches */}
-                        <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-primary-container p-gutter rounded-[4px]">
-                            <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Top Company Matches</h2>
-                            <div className="flex flex-col gap-4">
-                                {result.company_matches && result.company_matches.length > 0 ? (
-                                    result.company_matches.map((match, idx) => (
-                                        <div key={idx} className="flex justify-between items-center border-b-2 border-outline-variant pb-2">
-                                            <div>
-                                                <div className="font-bold text-lg">{match.name}</div>
-                                                <div className="text-sm text-on-surface-variant">{match.type}</div>
-                                            </div>
-                                            <div className="font-bold text-primary">{match.match_percentage}%</div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="font-body-md text-on-surface-variant">No strong matches found yet. Focus on the suggested improvements!</p>
-                                )}
-                            </div>
-                        </div>
-                        
-                        {/* Breakdown */}
-                        <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-primary p-gutter rounded-[4px]">
-                            <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Score Breakdown</h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                {Object.entries(result.breakdown || {}).map(([key, val]) => (
-                                    <div key={key} className="flex flex-col">
-                                        <span className="text-sm font-bold uppercase text-on-surface-variant">{key.replace('_', ' ')}</span>
-                                        <span className="text-2xl font-bold text-primary">{val}%</span>
+                {/* Detailed Company Matches */}
+                <div className="max-w-7xl mx-auto w-full px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col gap-stack-lg">
+                    <h2 className="font-h2 text-h2 text-black-forest">Company Recommendations</h2>
+                    
+                    {result.company_matches && result.company_matches.length > 0 ? (
+                        result.company_matches.map((match, idx) => (
+                            <div key={idx} className="bg-cornsilk border-2 border-black-forest border-l-[6px] border-l-primary p-gutter rounded-[4px] shadow-sm flex flex-col gap-4 animate-fade-in brutal-border hover:-translate-y-1 transition-transform">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-outline-variant pb-4">
+                                    <div>
+                                        <h3 className="font-h2 text-2xl text-black-forest uppercase">{match.name}</h3>
+                                        <p className="text-on-surface-variant font-bold text-lg">{match.type}</p>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                                    <div className="text-4xl font-bold font-mono text-primary mt-2 md:mt-0">
+                                        {match.match_percentage}%
+                                    </div>
+                                </div>
 
-                    <div className="md:col-span-5 flex flex-col gap-stack-lg">
-                        {/* Improvements */}
-                        {result.improvements && result.improvements.length > 0 && (
-                            <div className="bg-cornsilk border-2 border-black-forest border-l-[4px] border-l-accent p-gutter rounded-[4px]">
-                                <h2 className="font-h2 text-h2 mb-stack-md text-black-forest">Actionable Improvements</h2>
-                                <div className="flex flex-col gap-stack-md">
-                                    {result.improvements.map((imp, idx) => (
-                                        <div key={idx} className="flex flex-col gap-1 border-b-2 border-outline-variant pb-4 last:border-0 last:pb-0">
-                                            <div className="flex justify-between items-start">
-                                                <span className="font-bold text-black-forest">{imp.title}</span>
-                                                <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${imp.priority === 'HIGH' ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`}>{imp.priority}</span>
-                                            </div>
-                                            <p className="text-sm text-on-surface-variant">{imp.detail}</p>
-                                            <div className="text-sm font-bold text-primary mt-1">Impact: {imp.impact}</div>
+                                {match.description && (
+                                    <p className="text-sm text-on-surface-variant italic mb-2 line-clamp-3">"{match.description}"</p>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                                    {/* Left Column: Scores */}
+                                    <div className="flex flex-col gap-4">
+                                        <h4 className="font-bold uppercase text-sm border-b-2 border-outline-variant pb-1 text-black-forest">Score Breakdown</h4>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div className="flex justify-between items-center pr-4"><span className="font-bold text-on-surface-variant">Semantic</span> <span className="font-mono text-primary font-bold">{match.insights.Semantic_Score || 0}%</span></div>
+                                            <div className="flex justify-between items-center pr-4"><span className="font-bold text-on-surface-variant">Skill</span> <span className="font-mono text-primary font-bold">{match.insights.Skill_Score || 0}%</span></div>
+                                            <div className="flex justify-between items-center pr-4"><span className="font-bold text-on-surface-variant">Experience</span> <span className="font-mono text-primary font-bold">{match.insights.Experience_Score || 0}%</span></div>
+                                            <div className="flex justify-between items-center pr-4"><span className="font-bold text-on-surface-variant">Brand</span> <span className="font-mono text-primary font-bold">{match.insights.Brand_Score || 0}%</span></div>
+                                            <div className="flex justify-between items-center pr-4"><span className="font-bold text-on-surface-variant">Education</span> <span className="font-mono text-primary font-bold">{match.insights.Education_Score || 0}%</span></div>
                                         </div>
-                                    ))}
+                                        
+                                        <h4 className="font-bold uppercase text-sm border-b-2 border-outline-variant pb-1 mt-2 text-black-forest">Feedback</h4>
+                                        <div className="flex flex-col gap-2">
+                                            {match.insights.Experience_Feedback && (
+                                                <p className="text-sm"><span className="font-bold text-on-surface-variant">Experience:</span> {match.insights.Experience_Feedback}</p>
+                                            )}
+                                            {match.insights.Pedigree_Feedback && (
+                                                <p className="text-sm"><span className="font-bold text-on-surface-variant">Pedigree:</span> {match.insights.Pedigree_Feedback}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Skills */}
+                                    <div className="flex flex-col gap-4">
+                                        <h4 className="font-bold uppercase text-sm border-b-2 border-outline-variant pb-1 text-black-forest">Skills Matching</h4>
+                                        <div className="flex flex-col gap-3">
+                                            <div>
+                                                <div className="text-xs font-bold text-primary mb-2 uppercase">Matched Skills</div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(match.insights.Matched_Skills || []).map((skill, i) => (
+                                                        <span key={i} className="bg-primary-container text-on-primary-container text-xs px-2 py-1 rounded font-mono border-2 border-primary">{skill}</span>
+                                                    ))}
+                                                    {!(match.insights.Matched_Skills?.length > 0) && <span className="text-xs text-on-surface-variant italic">None</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-error mb-2 uppercase">Missing Skills</div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(match.insights.Missing_Skills || []).map((skill, i) => (
+                                                        <span key={i} className="bg-error-container text-on-error-container text-xs px-2 py-1 rounded font-mono border-2 border-error">{skill}</span>
+                                                    ))}
+                                                    {!(match.insights.Missing_Skills?.length > 0) && <span className="text-xs text-on-surface-variant italic">None</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        ))
+                    ) : (
+                        <div className="bg-cornsilk border-2 border-black-forest p-gutter rounded-[4px] brutal-border">
+                            <p className="font-body-md text-on-surface-variant">No strong matches found yet. Keep improving your profile!</p>
+                            {result.recommend_error && (
+                                <p className="text-xs mt-2 text-red-600 font-mono bg-red-50 p-2 rounded border-2 border-red-600">Debug: {result.recommend_error}</p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Sticky Action Bar */}
@@ -490,14 +501,15 @@ export default function Evaluate() {
             <div className="bg-primary-container text-cornsilk px-margin-desktop py-stack-md flex justify-between items-center border-b-2 border-primary">
                 <h1 className="font-h2 text-h2">New Prediction</h1>
                 <div className="hidden md:flex border-2 border-black-forest">
-                    <button className="bg-black-forest text-cornsilk px-6 py-2 font-bold uppercase transition-colors">Manual Entry</button>
-                    <button className="bg-cornsilk text-black-forest px-6 py-2 font-bold uppercase hover:bg-surface-variant transition-colors">Resume Upload</button>
+                    <button onClick={() => setIsUploadMode(false)} className={`${!isUploadMode ? 'bg-black-forest text-cornsilk' : 'bg-cornsilk text-black-forest hover:bg-surface-variant'} px-6 py-2 font-bold uppercase transition-colors`}>Manual Entry</button>
+                    <button onClick={() => setIsUploadMode(true)} className={`${isUploadMode ? 'bg-black-forest text-cornsilk' : 'bg-cornsilk text-black-forest hover:bg-surface-variant'} px-6 py-2 font-bold uppercase transition-colors`}>Resume Upload</button>
                 </div>
             </div>
 
             {/* MAIN LAYOUT */}
             <div className="flex flex-1 overflow-hidden relative">
                 {/* SideNavBar */}
+                {!isUploadMode && (
                 <aside className="hidden md:flex flex-col gap-stack-md p-margin-mobile bg-surface h-full w-64 border-r-2 border-primary shrink-0 z-10">
                     <div className="mb-stack-lg">
                         <h2 className="font-h2 text-h2 text-primary uppercase">Prediction Wizard</h2>
@@ -517,41 +529,66 @@ export default function Evaluate() {
                         </div>
                     </div>
                 </aside>
+                )}
 
                 {/* MAIN FORM AREA */}
                 <main className="flex-1 overflow-y-auto bg-cornsilk p-margin-mobile md:p-margin-desktop z-0 h-full">
                     <div className="max-w-4xl mx-auto flex flex-col gap-stack-md pb-16">
-                        {renderStepContent()}
-                        
-                        {/* NAVIGATION BUTTONS */}
-                        <div className="bg-black-forest p-4 md:p-6 border-2 border-primary flex justify-between items-center gap-4 rounded">
-                            {currentStep > 1 ? (
+                        {isUploadMode ? (
+                            <section className="border-2 border-black-forest rounded bg-cornsilk p-stack-lg relative animate-fade-in flex flex-col items-center justify-center min-h-[400px]">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l"></div>
+                                <h3 className="font-h2 text-3xl text-black-forest mb-4 uppercase text-center">Upload Your Resume</h3>
+                                <p className="text-on-surface-variant mb-8 text-center max-w-md">We will extract your skills, experience, and education to match you with the best roles.</p>
+                                
+                                <label className="cursor-pointer border-2 border-dashed border-primary bg-primary-container/10 hover:bg-primary-container/30 transition-colors rounded p-12 flex flex-col items-center justify-center w-full max-w-lg mb-8">
+                                    <span className="material-symbols-outlined text-6xl text-primary mb-4">cloud_upload</span>
+                                    <span className="font-bold text-lg">{selectedFile ? selectedFile.name : 'Select PDF Resume'}</span>
+                                    <input type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
+                                </label>
+                                
                                 <button 
-                                    onClick={() => setCurrentStep(prev => prev - 1)}
-                                    className="font-bold uppercase py-3 px-6 bg-transparent border-2 border-cornsilk text-cornsilk hover:bg-surface-variant hover:text-black-forest transition-colors"
+                                    onClick={handleFileUpload} 
+                                    disabled={!selectedFile}
+                                    className={`font-bold uppercase py-4 px-12 text-lg transition-colors border-2 ${selectedFile ? 'border-transparent bg-accent text-black-forest hover:bg-[#bc6c25]' : 'border-outline-variant bg-surface-variant text-on-surface-variant cursor-not-allowed'}`}
                                 >
-                                    Previous
+                                    Analyze Resume
                                 </button>
-                            ) : (
-                                <div /> 
-                            )}
-                            
-                            {currentStep < APP_STEPS.length ? (
-                                <button 
-                                    onClick={() => setCurrentStep(prev => prev + 1)}
-                                    className="font-bold uppercase py-3 px-8 md:px-12 text-lg bg-primary text-cornsilk border-2 border-transparent hover:border-cornsilk transition-colors"
-                                >
-                                    Next Step
-                                </button>
-                            ) : (
-                                <button 
-                                    onClick={handleSubmit} 
-                                    className="font-bold uppercase py-3 px-8 md:px-12 text-lg transition-colors border-2 border-transparent bg-accent text-black-forest hover:bg-[#bc6c25]"
-                                >
-                                    Predict Chances
-                                </button>
-                            )}
-                        </div>
+                            </section>
+                        ) : (
+                            <>
+                                {renderStepContent()}
+                                
+                                {/* NAVIGATION BUTTONS */}
+                                <div className="bg-black-forest p-4 md:p-6 border-2 border-primary flex justify-between items-center gap-4 rounded">
+                                    {currentStep > 1 ? (
+                                        <button 
+                                            onClick={() => setCurrentStep(prev => prev - 1)}
+                                            className="font-bold uppercase py-3 px-6 bg-transparent border-2 border-cornsilk text-cornsilk hover:bg-surface-variant hover:text-black-forest transition-colors"
+                                        >
+                                            Previous
+                                        </button>
+                                    ) : (
+                                        <div /> 
+                                    )}
+                                    
+                                    {currentStep < APP_STEPS.length ? (
+                                        <button 
+                                            onClick={() => setCurrentStep(prev => prev + 1)}
+                                            className="font-bold uppercase py-3 px-8 md:px-12 text-lg bg-primary text-cornsilk border-2 border-transparent hover:border-cornsilk transition-colors"
+                                        >
+                                            Next Step
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={handleSubmit} 
+                                            className="font-bold uppercase py-3 px-8 md:px-12 text-lg transition-colors border-2 border-transparent bg-accent text-black-forest hover:bg-[#bc6c25]"
+                                        >
+                                            Predict Chances
+                                        </button>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </main>
             </div>
