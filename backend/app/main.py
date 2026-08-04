@@ -6,8 +6,11 @@ import app.models.user  # Ensure SQLAlchemy models are registered
 
 from app.core.config import settings
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Create database tables safely
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Warning: Database initialization skipped or failed during startup: {e}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
