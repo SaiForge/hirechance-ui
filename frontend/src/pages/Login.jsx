@@ -37,7 +37,7 @@ export default function Login() {
 
             const data = await response.json();
             localStorage.setItem('token', data.access_token);
-            navigate('/evaluate'); // Or dashboard if you prefer
+            navigate('/');
         } catch (err) {
             setError(err.message);
         } finally {

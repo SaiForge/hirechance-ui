@@ -46,7 +46,7 @@ export default function Register() {
             if (loginRes.ok) {
                 const data = await loginRes.json();
                 localStorage.setItem('token', data.access_token);
-                navigate('/evaluate');
+                navigate('/');
             } else {
                 navigate('/login');
             }
