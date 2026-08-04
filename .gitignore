@@ -69,8 +69,15 @@ env.bak/
 venv.bak/
 
 # Environment variables
-backend/.env
 .env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Testing and Coverage
 .coverage

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+import { API_ENDPOINTS } from '../config/api';
+
 export default function Register() {
     const [formData, setFormData] = useState({ full_name: '', email: '', password: '' });
     const [error, setError] = useState('');
@@ -16,10 +18,8 @@ export default function Register() {
         setError('');
         setLoading(true);
 
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-
         try {
-            const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+            const response = await fetch(API_ENDPOINTS.REGISTER, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,7 +37,7 @@ export default function Register() {
             formDataObj.append('username', formData.email);
             formDataObj.append('password', formData.password);
 
-            const loginRes = await fetch(`${API_URL}/api/v1/auth/login`, {
+            const loginRes = await fetch(API_ENDPOINTS.LOGIN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: formDataObj.toString()

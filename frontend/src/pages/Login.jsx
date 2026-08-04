@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+import { API_ENDPOINTS } from '../config/api';
+
 export default function Login() {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
@@ -16,14 +18,12 @@ export default function Login() {
         setError('');
         setLoading(true);
 
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-
         try {
             const formDataObj = new URLSearchParams();
             formDataObj.append('username', formData.username);
             formDataObj.append('password', formData.password);
 
-            const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+            const response = await fetch(API_ENDPOINTS.LOGIN, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

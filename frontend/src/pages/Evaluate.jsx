@@ -1,6 +1,7 @@
 // src/pages/Evaluate.jsx
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config/api';
 
 const ROLES = [
     // AI / ML
@@ -31,7 +32,6 @@ const APP_STEPS = [
 
 export default function Evaluate() {
     const navigate = useNavigate();
-    const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1/recommend/predict` : "http://localhost:8001/api/v1/recommend/predict";
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -97,8 +97,7 @@ export default function Evaluate() {
 
         try {
             const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
-            const UPLOAD_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1/resume/upload` : "http://localhost:8001/api/v1/resume/upload";
-            const res = await fetch(UPLOAD_URL, {
+            const res = await fetch(API_ENDPOINTS.UPLOAD_RESUME, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -192,7 +191,7 @@ export default function Evaluate() {
 
         try {
             const minDelay = new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
-            const res = await fetch(API_URL, { 
+            const res = await fetch(API_ENDPOINTS.PREDICT_RECOMMEND, { 
                 method: 'POST', 
                 headers: { 
                     'Content-Type': 'application/json',

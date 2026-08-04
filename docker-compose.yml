@@ -4,9 +4,15 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8001:8000"
+      - "${BACKEND_PORT:-8001}:8000"
+    env_file:
+      - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/placement_db
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-placement_db}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkeythatyoushouldchangeinproduction}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
@@ -20,10 +26,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
+    env_file:
+      - ./frontend/.env
     environment:
       # VITE_API_URL must be reachable from the user's browser, not from inside Docker
-      - VITE_API_URL=http://localhost:8001
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8001}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -33,15 +41,15 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=placement_db
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-placement_db}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
