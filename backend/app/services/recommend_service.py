@@ -351,7 +351,7 @@ sys.modules['__main__'].JobRecommenderModel = JobRecommenderModel
 class RecommendationService:
     def __init__(self):
         self.recommender = None
-        self._load_model()
+        # Model will be loaded lazily on first request via recommend_jobs() or background thread
 
     def _load_model(self):
         print("=" * 60)
