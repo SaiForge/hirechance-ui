@@ -1,16 +1,65 @@
-# React + Vite
+# 🎨 HireChance - Frontend UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The client application for **HireChance**, built with **React 19**, **Vite**, and **Tailwind CSS v4**.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dynamic Resume Evaluation View**: Upload PDF or DOCX resumes and receive instant ATS readability scores, extracted skill tags, and categorized breakdown metrics.
+- **AI Recommendation Viewer**: Interactive cards displaying job title matches, company tiers, location, match percentage, and direct apply links.
+- **Candidate Analytics Dashboard**: Track historical resume submissions, score trajectories, and personal improvement insights.
+- **Modern Responsive Design**: Glassmorphic styling, smooth micro-interactions, dark/light harmonious color accents, and full mobile responsiveness.
+- **Secure Authentication**: Protected routes with JWT session persistence.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework**: React 19
+- **Build Tool**: Vite 7
+- **Styling**: Tailwind CSS v4
+- **Routing**: React Router DOM v7
+- **Linting**: ESLint 9
 
-## Expanding the ESLint configuration
+## 💻 Local Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Variables
+
+Create a `.env` file from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Set the backend API URL:
+
+```env
+VITE_API_URL=http://localhost:8001
+```
+
+### 3. Start Development Server
+
+```bash
+npm run dev
+```
+
+The application will be accessible at `http://localhost:5173`.
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## 🚢 Deployment
+
+The frontend is configured for automatic deployment to **Azure Static Web Apps** via GitHub Actions workflow `.github/workflows/azure-static-web-apps-jolly-moss-099041b00.yml`.
