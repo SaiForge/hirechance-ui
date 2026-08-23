@@ -28,8 +28,15 @@ export default function Register() {
             });
 
             if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.detail || 'Registration failed');
+                let errorMsg = 'Registration failed';
+                try {
+                    const errData = await response.json();
+                    errorMsg = errData.detail || errorMsg;
+                } catch {
+                    const text = await response.text();
+                    errorMsg = text || `Server error (${response.status})`;
+                }
+                throw new Error(errorMsg);
             }
 
             // Immediately login after registration

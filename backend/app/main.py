@@ -34,9 +34,31 @@ app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboar
 app.include_router(recommend.router, prefix="/api/v1/recommend", tags=["Recommendation"])
 
 
+@app.on_event("startup")
+def on_startup():
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("[Startup] Database tables verified / created successfully.")
+    except Exception as e:
+        print(f"[Startup] Warning: Could not connect to database on startup: {e}")
+
+
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    db_status = "unconnected"
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "database": db_status,
+        "target_host": settings.database_url.split('@')[-1] if '@' in settings.database_url else "default/localhost"
+    }
 
 
 @app.get("/debug/model")
