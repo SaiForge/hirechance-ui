@@ -4,7 +4,9 @@
  * Fallback to default local development backend URL (http://localhost:8001)
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+export const API_BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? 'https://hirechance-api-eabgasdkcnc6gvbf.centralindia-01.azurewebsites.net' : 'http://localhost:8001');
 
 export const API_ENDPOINTS = {
     // Auth endpoints
