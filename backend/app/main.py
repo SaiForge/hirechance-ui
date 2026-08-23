@@ -42,6 +42,11 @@ def on_startup():
     except Exception as e:
         print(f"[Startup] Warning: Could not connect to database on startup: {e}")
 
+    # Warm up ML model in background thread so it is ready immediately for user requests
+    import threading
+    from app.services.recommend_service import recommend_service
+    threading.Thread(target=recommend_service._load_model, daemon=True).start()
+
 
 @app.get("/health")
 def health_check():
