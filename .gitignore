@@ -94,6 +94,8 @@ cover/
 *.log
 *.sqlite3
 *.db
+!backend/india_job_vector_db/
+!backend/india_job_vector_db/**
 postgres_data/
 
 # Jupyter Notebooks

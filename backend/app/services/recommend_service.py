@@ -41,8 +41,11 @@ class JobRecommenderModel:
         self._init_components()
 
     def _resolve_db_path(self):
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         candidates = [
+            os.path.join(base_dir, "india_job_vector_db"),
             self.db_path,
+            "/home/site/wwwroot/india_job_vector_db",
             "/app/india_job_vector_db",
             "./india_job_vector_db",
             "india_job_vector_db",
@@ -361,8 +364,15 @@ class RecommendationService:
         try:
             import pickle
             
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             # Look for model.pkl in common locations
-            model_paths = ["model.pkl", "app/model.pkl", "/app/model.pkl"]
+            model_paths = [
+                os.path.join(base_dir, "model.pkl"),
+                "/home/site/wwwroot/model.pkl",
+                "model.pkl", 
+                "app/model.pkl", 
+                "/app/model.pkl"
+            ]
             loaded_path = None
             
             for p in model_paths:
