@@ -59,7 +59,18 @@ def health_check():
     except Exception as e:
         db_status = f"error: {str(e)}"
 
+    from app.services.recommend_service import recommend_service
+    if recommend_service.recommender is not None:
+        model_status = "ready"
+    elif recommend_service.is_loading:
+        model_status = "loading"
+    elif recommend_service.last_error:
+        model_status = f"error: {recommend_service.last_error}"
+    else:
+        model_status = "uninitialized"
+
     return {
-        "status": "healthy" if db_status == "connected" else "degraded",
-        "database": db_status
+        "status": "healthy" if db_status == "connected" and recommend_service.recommender is not None else "degraded",
+        "database": db_status,
+        "model": model_status
     }

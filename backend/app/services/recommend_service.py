@@ -50,14 +50,36 @@ class JobRecommenderModel:
             "./india_job_vector_db",
             "india_job_vector_db",
         ]
+        found_path = None
         for p in candidates:
             if os.path.isdir(p) and os.listdir(p):
                 print(f"[Model] Found valid vector DB at: {p}")
-                return p
-        raise RuntimeError(f"No valid vector DB found. Checked: {candidates}")
+                found_path = p
+                break
+
+        if not found_path:
+            raise RuntimeError(f"No valid vector DB directory found. Checked: {candidates}")
+
+        # On Azure Linux App Service, /home is a network CIFS share.
+        # Copy to /tmp/india_job_vector_db for local fast POSIX SQLite access to prevent SQLite locking issues
+        if "site/wwwroot" in found_path or found_path.startswith("/home") or found_path.startswith("./"):
+            tmp_path = "/tmp/india_job_vector_db"
+            if not os.path.isdir(tmp_path) or not os.path.exists(os.path.join(tmp_path, "chroma.sqlite3")):
+                import shutil
+                try:
+                    shutil.copytree(found_path, tmp_path, dirs_exist_ok=True)
+                    print(f"[Model] Copied vector DB to local fast storage: {tmp_path}")
+                    return tmp_path
+                except Exception as e:
+                    print(f"[Model] Warning copying to /tmp: {e}")
+                    return found_path
+            return tmp_path
+
+        return found_path
 
     def _init_components(self):
         import chromadb
+        from chromadb.config import Settings
         from sentence_transformers import SentenceTransformer
 
         resolved_db_path = self._resolve_db_path()
@@ -65,28 +87,22 @@ class JobRecommenderModel:
         self.model = SentenceTransformer(self.model_name, device='cpu')
         print(f"[Model] SentenceTransformer loaded: {self.model_name}")
 
-        self.client = chromadb.PersistentClient(path=resolved_db_path)
+        self.client = chromadb.PersistentClient(
+            path=resolved_db_path,
+            settings=Settings(anonymized_telemetry=False, allow_reset=True)
+        )
 
         try:
             cols = self.client.list_collections()
-            if cols:
-                col_names = []
-                for c in cols:
-                    if isinstance(c, str):
-                        col_names.append(c)
-                    elif hasattr(c, 'name'):
-                        col_names.append(c.name)
-                    else:
-                        col_names.append(str(c))
-                print(f"[Model] Available collections: {col_names}")
-            else:
-                col_names = []
+            col_names = [c.name if hasattr(c, 'name') else str(c) for c in (cols or [])]
+            print(f"[Model] Available collections: {col_names}")
         except Exception as e:
             print(f"[Model] Warning listing collections: {e}")
             col_names = []
 
         if self.collection_name in col_names:
             self.collection = self.client.get_collection(name=self.collection_name)
+            print(f"[Model] Connected to collection: {self.collection_name}")
         elif col_names:
             self.collection = self.client.get_collection(name=col_names[0])
             print(f"[Model] Using first available collection: {col_names[0]}")
@@ -354,49 +370,34 @@ sys.modules['__main__'].JobRecommenderModel = JobRecommenderModel
 class RecommendationService:
     def __init__(self):
         self.recommender = None
-        # Model will be loaded lazily on first request via recommend_jobs() or background thread
+        self.last_error = None
+        self.is_loading = False
 
     def _load_model(self):
+        if self.recommender is not None:
+            return
+        if self.is_loading:
+            return
+        self.is_loading = True
         print("=" * 60)
         print("[RecommendationService] Starting model initialization...")
         print(f"[RecommendationService] CWD: {os.getcwd()}")
 
         try:
-            import pickle
-            
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            # Look for model.pkl in common locations
-            model_paths = [
-                os.path.join(base_dir, "model.pkl"),
-                "/home/site/wwwroot/model.pkl",
-                "model.pkl", 
-                "app/model.pkl", 
-                "/app/model.pkl"
-            ]
-            loaded_path = None
-            
-            for p in model_paths:
-                if os.path.exists(p):
-                    loaded_path = p
-                    break
-                    
-            if loaded_path:
-                print(f"[RecommendationService] Loading model from {loaded_path}...")
-                with open(loaded_path, 'rb') as f:
-                    self.recommender = pickle.load(f)
-                print("[RecommendationService] Model loaded successfully from pickle!")
-            else:
-                print("[RecommendationService] model.pkl not found. Falling back to direct instantiation...")
-                self.recommender = JobRecommenderModel(
-                    model_name='all-MiniLM-L6-v2',
-                    db_path='./india_job_vector_db',
-                    collection_name='india_it_jobs'
-                )
-                print("[RecommendationService] Model instantiated successfully!")
+            self.recommender = JobRecommenderModel(
+                model_name='all-MiniLM-L6-v2',
+                db_path='./india_job_vector_db',
+                collection_name='india_it_jobs'
+            )
+            print("[RecommendationService] Model instantiated and ready!")
+            self.last_error = None
         except Exception as e:
-            print(f"[RecommendationService] ERROR: {e}")
-            traceback.print_exc()
+            tb = traceback.format_exc()
+            print(f"[RecommendationService] ERROR: {e}\n{tb}")
+            self.last_error = f"{e}"
             self.recommender = None
+        finally:
+            self.is_loading = False
 
         print("=" * 60)
 
@@ -404,7 +405,8 @@ class RecommendationService:
         if self.recommender is None:
             self._load_model()
         if self.recommender is None:
-            raise RuntimeError("Recommendation model is not available")
+            err_msg = self.last_error or "Model initialization failed"
+            raise RuntimeError(f"Recommendation model is not available: {err_msg}")
         return self.recommender.predict(resume_text)
 
 recommend_service = RecommendationService()
